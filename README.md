@@ -55,28 +55,28 @@ fun YourMainAppScreen(modifier: Modifier = Modifier) {
             CenterAlignedTopAppBar(title = { Text("List Of Media") })
         },
         content = {
-            LazyColumn(contentPadding = it) {  
-       
-                // Use the helper to list items
-                items(mediaController?.mediaItems ?: emptyList()) { mediaItem ->
+            LazyColumn(contentPadding = it) {
+
+                itemsIndexed(mediaController?.mediaItems ?: emptyList()) { index, mediaItem ->
                     ListItem(
+                        modifier = Modifier.clickable { 
+                            //ideally you would use, mediaController?.seekToDefaultPosition(mediaController?.mediaItems?.indexOfFirst { it.mediaId == mediaItem.mediaId } ?: 0), as its more error proof and doesn't work with indexes 
+                            mediaController?.seekToDefaultPosition(index)
+                        },
                         headlineContent = {
                             Text(mediaItem.mediaMetadata.title.toString() ?: "Unknown Title")
                         },
                         supportingContent = {
                             Text(mediaItem.mediaMetadata.artist.toString() ?: "Unknown Artist")
                         }
-                        // Add an onClick to play this item
-                        // modifier = Modifier.clickable { mediaController?.play(mediaItem) }
                     )
                 }
-                
+
             }
         },
         bottomBar = {
-            // Show the mini-player only when the controller is ready
-            mediaController?.let { player ->
-                YourFullScreenViewOrMiniPlayer(player)
+            mediaController?.let {
+                YourFullScreenViewOrMiniPlayer(it)
             }
         }
     )
