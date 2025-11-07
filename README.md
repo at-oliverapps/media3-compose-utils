@@ -87,6 +87,7 @@ fun YourMainAppScreen(modifier: Modifier = Modifier) {
 /**
  * A helper extension to easily get a List<MediaItem> from the Player.
  * Place this in a 'PlayerExtensions.kt' file.
+ * You shouldnt ideally don't use this method as you prob get your data from a database and manage your list by yourself
  */
 private val Player.mediaItems: List<MediaItem>
     get() = object : AbstractList<MediaItem>() {
@@ -101,63 +102,68 @@ The MiniPlayer(that usually sits on the bottom of the screen) or Fullscreen view
 ```kotlin
 @OptIn(UnstableApi::class)
 @Composable
-fun YourMiniPlayerOrFullScreenView(player: Player) {
-    
+fun YourFullScreenViewOrMiniPlayer(player: Player) {
+
     // --- Default Media3 State Helpers ---
     val playPauseButtonState = rememberPlayPauseButtonState(player)
     val previousButtonState = rememberPreviousButtonState(player)
     val nextButtonState = rememberNextButtonState(player)
-    
+    // The default seek buttons (if you want them)
+    // val defaultSeekBackButtonState = androidx.media3.ui.compose.state.rememberSeekBackButtonState(player)
+    // val defaultSeekForwardButtonState = androidx.media3.ui.compose.state.rememberSeekForwardButtonState(player)
+
     // --- Custom Utils from this Repo ---
-    
-    // These handle live streams/DVR correctly, unlike the default ones
-    val seekBackButtonState = rememberSeekBackButtonState(player) 
+
+    // These listen for isMediaItemDynamic, allowing seek in live DVR streams
+    val seekBackButtonState = rememberSeekBackButtonState(player)
     val seekForwardButtonState = rememberSeekForwardButtonState(player)
     
-    // This one gives you easy access to title, artist, etc.
+    // This gives you easy access to metadata
     val mediaMetadataState = rememberMediaMetadata(player)
+    // This gives you the current MediaItem object
+    val currentMediaItem = rememberCurrentMediaItemState(player)
 
     // --- Build Your UI ---
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        
+    Row {
+
         AsyncImage(
-            model = mediaMetadataState.artworkData ?: mediaMetadataState.artworkUri ?: R.drawable.placeholder, 
-            contentDescription = "Artwork",
-            modifier = Modifier.size(64.dp)
+            model = mediaMetadataState.artworkData ?: mediaMetadataState.artworkUri, 
+            contentDescription = "Player Artwork"
         )
 
-        Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
-            Text(
-                text = mediaMetadataState.title?.toString() ?: "No Title", 
-                maxLines = 1, 
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = mediaMetadataState.artist?.toString() ?: "Unknown Artist", 
-                maxLines = 1
-            )
+        Column {
+            Text(mediaMetadataState.title?.toString() ?: "No Title")
+            Text(mediaMetadataState.artist?.toString() ?: "Unknown Artist")
+            Text(mediaMetadataState.albumTitle?.toString() ?: "Unknown Album")
         }
-        
-        Row {
-            // Use your custom seek buttons
-            IconButton(onClick = seekBackButtonState::onClick, enabled = seekBackButtonState.isEnabled) {
-                Icon(Icons.Default.FastRewind, contentDescription = "Seek Back")
-            }
-            
-            IconButton(onClick = playPauseButtonState::onClick) {
-                Icon(
-                    imageVector = if (playPauseButtonState.showPlay) Icons.Default.PlayArrow else Icons.Default.Pause,
-                    contentDescription = "Toggle Playback",
-                    modifier = Modifier.size(40.dp)
-                )
-            }
 
-            IconButton(onClick = nextButtonState::onClick, enabled = nextButtonState.isEnabled) {
-                Icon(Icons.Default.SkipNext, contentDescription = "Next")
-            }
+        Row {
+            Button(
+                onClick = seekBackButtonState::onClick,
+                enabled = seekBackButtonState.isEnabled,
+                content = { Text("FR") }
+            )
+            Button(
+                onClick = previousButtonState::onClick,
+                enabled = previousButtonState.isEnabled,
+                content = { Text("Prev") }
+            )
+            Button(
+                onClick = playPauseButtonState::onClick,
+                content = { 
+                    Text(if (playPauseButtonState.showPlay) "Play" else "Pause") 
+                }
+            )
+            Button(
+                onClick = nextButtonState::onClick,
+                enabled = nextButtonState.isEnabled,
+                content = { Text("Next") }
+            )
+            Button(
+                onClick = seekForwardButtonState::onClick,
+                enabled = seekForwardButtonState.isEnabled,
+                content = { Text("FF") }
+            )
         }
     }
 }
