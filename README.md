@@ -75,8 +75,17 @@ fun YourMainAppScreen(modifier: Modifier = Modifier) {
             }
         },
         bottomBar = {
+            // this should be enough to get a playbar up and running
             mediaController?.let {
                 YourFullScreenViewOrMiniPlayer(it)
+            }
+
+            but in some rare circumstances it has to be initialised like this 
+            mediaController?.let { player ->
+                val currentMediaItem = rememberCurrentMediaItemState(player)
+                currentMediaItem.mediaItem?.let { _ ->
+                    YourFullScreenViewOrMiniPlayer(player)
+                }
             }
         }
     )
