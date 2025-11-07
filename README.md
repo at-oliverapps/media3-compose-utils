@@ -137,6 +137,7 @@ fun YourFullScreenViewOrMiniPlayer(player: Player) {
     // --- Build Your UI ---
     Row {
 
+        //Coil AsyncImage
         AsyncImage(
             model = mediaMetadataState.artworkData ?: mediaMetadataState.artworkUri, 
             contentDescription = "Player Artwork"
