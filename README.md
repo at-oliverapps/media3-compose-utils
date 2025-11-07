@@ -43,8 +43,6 @@ Since this isn't a hosted library yet, just copy these files into your project's
 In your main Composable (like `MainActivity` or `YourMainAppScreen`), call `rememberMediaController` with your `MediaSessionService` class as the generic type. This gives you a `State<MediaController?>`.
 
 ```kotlin
-import io.oliverapps.media3.compose.utils.rememberMediaController
-import android.annotation.SuppressLint
 
 @SuppressLint("UnsafeOptInUsageError")
 @Composable
@@ -60,4 +58,69 @@ fun YourMainAppScreen(modifier: Modifier = Modifier) {
         YourMiniPlayer(player = player)
     }
     
+}
+
+The MiniPlayer(thart usually sits on the bottom of the screen) or Fullscreen view of your player
+
+@OptIn(UnstableApi::class)
+@Composable
+fun YourMiniPlayerOrFullScreenView(player: Player) {
+    
+    // --- Default Media3 State Helpers ---
+    val playPauseButtonState = rememberPlayPauseButtonState(player)
+    val previousButtonState = rememberPreviousButtonState(player)
+    val nextButtonState = rememberNextButtonState(player)
+    
+    // --- Custom Utils from this Repo ---
+    
+    // These handle live streams/DVR correctly, unlike the default ones
+    val seekBackButtonState = rememberSeekBackButtonState(player) 
+    val seekForwardButtonState = rememberSeekForwardButtonState(player)
+    
+    // This one gives you easy access to title, artist, etc.
+    val mediaMetadataState = rememberMediaMetadata(player)
+
+    // --- Build Your UI ---
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        
+        AsyncImage(
+            model = mediaMetadataState.artworkData ?: mediaMetadataState.artworkUri ?: R.drawable.placeholder, 
+            contentDescription = "Artwork",
+            modifier = Modifier.size(64.dp)
+        )
+
+        Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
+            Text(
+                text = mediaMetadataState.title?.toString() ?: "No Title", 
+                maxLines = 1, 
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = mediaMetadataState.artist?.toString() ?: "Unknown Artist", 
+                maxLines = 1
+            )
+        }
+        
+        Row {
+            // Use your custom seek buttons
+            IconButton(onClick = seekBackButtonState::onClick, enabled = seekBackButtonState.isEnabled) {
+                Icon(Icons.Default.FastRewind, contentDescription = "Seek Back")
+            }
+            
+            IconButton(onClick = playPauseButtonState::onClick) {
+                Icon(
+                    imageVector = if (playPauseButtonState.showPlay) Icons.Default.PlayArrow else Icons.Default.Pause,
+                    contentDescription = "Toggle Playback",
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+
+            IconButton(onClick = nextButtonState::onClick, enabled = nextButtonState.isEnabled) {
+                Icon(Icons.Default.SkipNext, contentDescription = "Next")
+            }
+        }
+    }
 }
