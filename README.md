@@ -80,7 +80,7 @@ fun YourMainAppScreen(modifier: Modifier = Modifier) {
                 YourFullScreenViewOrMiniPlayer(it)
             }
 
-            but in some rare circumstances it has to be initialised like this 
+            //but in some rare circumstances it has to be initialised like this 
             mediaController?.let { player ->
                 val currentMediaItem = rememberCurrentMediaItemState(player)
                 currentMediaItem.mediaItem?.let { _ ->
