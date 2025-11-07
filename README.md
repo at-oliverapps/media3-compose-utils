@@ -32,7 +32,6 @@ Since this isn't a hosted library yet, just copy these files into your project's
 * `CurrentMediaItemState.kt`
 * `MediaControllerState.kt`
 * `MediaMetadataState.kt`
-* `PlayPauseButtonState.kt`
 * `SeekBackButtonState.kt`
 * `SeekForwardButtonState.kt`
 * ...and any others you need!
