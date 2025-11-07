@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.listen
 import androidx.media3.common.util.UnstableApi
@@ -19,22 +21,86 @@ fun rememberCurrentMediaItemState(player: Player): CurrentMediaItemState {
 @UnstableApi
 class CurrentMediaItemState(private val player: Player) {
 
-    var mediaItem by mutableStateOf(player.currentMediaItem)
+    var mediaMetadata: MediaMetadata by mutableStateOf(MediaMetadata.EMPTY)
+        private set
+    var mediaId: String by mutableStateOf("")
+        private set
+    var requestMetadata: MediaItem.RequestMetadata by mutableStateOf(MediaItem.RequestMetadata.EMPTY)
+        private set
+    var liveConfiguration: MediaItem.LiveConfiguration by mutableStateOf(MediaItem.LiveConfiguration.UNSET)
+        private set
+    var clippingConfiguration: MediaItem.ClippingConfiguration by mutableStateOf(MediaItem.ClippingConfiguration.UNSET)
+        private set
+    var localConfiguration: MediaItem.LocalConfiguration? by mutableStateOf(null) // Officially Nullable
         private set
 
     suspend fun observe(): Nothing {
 
-        mediaItem = player.currentMediaItem
+        fun updateState(player: Player){
+            player.currentMediaItem?.mediaMetadata?.let {
+                mediaMetadata = it
+            }
+
+            player.currentMediaItem?.mediaId?.let {
+                mediaId = it
+            }
+
+            player.currentMediaItem?.requestMetadata?.let {
+                requestMetadata = it
+            }
+
+            player.currentMediaItem?.liveConfiguration?.let {
+                liveConfiguration = it
+            }
+
+            player.currentMediaItem?.clippingConfiguration?.let {
+                clippingConfiguration = it
+            }
+
+            localConfiguration = player.currentMediaItem?.localConfiguration
+        }
+
+        updateState(player)
 
         player.listen { events ->
-            if (
-                events.containsAny(
-                    Player.EVENT_MEDIA_ITEM_TRANSITION
-                )
-            ) {
-               mediaItem = this.currentMediaItem
+            if (events.containsAny(Player.EVENT_MEDIA_ITEM_TRANSITION)) {
+                updateState(this)
+            }
+        }
+
+    }
+
+}
+
+/**
+ * A Composable that provides the raw MediaItem. It is simpler to use but
+ * may trigger wider recompositions than the granular state holder.
+ *
+ * use like
+ * val currentMediaItem by rememberCurrentMediaItem(player)
+ */
+@UnstableApi
+@Composable
+fun rememberCurrentMediaItem(player: Player): State<MediaItem?> {
+    val state = remember(player) { CurrentMediaItem(player) }
+    LaunchedEffect(player) { state.observe() }
+    return state.mediaItem
+}
+
+@UnstableApi
+private class CurrentMediaItem(private val player: Player) {
+
+    var mediaItem = mutableStateOf(player.currentMediaItem)
+        private set
+
+    suspend fun observe(): Nothing {
+
+        mediaItem.value = player.currentMediaItem
+
+        player.listen { events ->
+            if (events.containsAny(Player.EVENT_MEDIA_ITEM_TRANSITION)) {
+                mediaItem.value = this.currentMediaItem
             }
         }
     }
-
 }
