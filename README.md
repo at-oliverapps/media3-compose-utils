@@ -29,12 +29,12 @@ This usually requires a lot of boilerplate code (managing `SessionToken`, `Liste
 
 Since this isn't a hosted library yet, just copy these files into your project's `utils` or `player` package:
 
-* `MediaControllerManager.kt`
-* `rememberMediaController.kt`
-* `rememberMediaMetadata.kt`
-* `rememberSeekBackButtonState.kt`
-* `rememberSeekForwardButtonState.kt`
-* `rememberCurrentMediaItemState.kt`
+* `CurrentMediaItemState.kt`
+* `MediaControllerState.kt`
+* `MediaMetadataState.kt`
+* `PlayPauseButtonState.kt`
+* `SeekBackButtonState.kt`
+* `SeekForwardButtonState.kt`
 * ...and any others you need!
 
 ### 2. Create Your Main Screen
