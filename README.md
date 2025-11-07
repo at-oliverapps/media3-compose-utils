@@ -46,7 +46,7 @@ Here is a complete example of a main screen with a `Scaffold`. It connects to th
 fun YourMainAppScreen(modifier: Modifier = Modifier) {
 
     // The magic line: Connects to your service
-    // Replace 'MediaSessionService' with your app's 'MediaSessionService', 'MediaLibraryService' extension
+    // Replace 'MediaSessionService' with your app's 'MediaSessionService' or 'MediaLibraryService' extension
     val mediaController by rememberMediaController<MediaSessionService>()
 
     Scaffold(
