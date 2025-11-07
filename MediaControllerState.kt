@@ -39,43 +39,6 @@ import kotlin.reflect.KClass
  * controller is not yet connected or has been released.
  * NOTE: MediaController is under the hood just an PLayer(exoplayer) so you have access to the same methods as you normally would in that case
  */
-@Deprecated(
-    message = "val mediaController by rememberMediaController(MediaSessionService::class) is Deprecated",
-    replaceWith = ReplaceWith("val mediaController by rememberMediaController<MediaSessionService>()")
-)
-@OptIn(UnstableApi::class)
-@Composable
-fun <S : MediaSessionService> rememberMediaController(
-    mediaSessionService: KClass<S>,
-    lifecycle: Lifecycle = LocalLifecycleOwner.current.lifecycle
-): State<MediaController?> {
-    val appContext = LocalContext.current.applicationContext
-    val controllerManager = remember(mediaSessionService) {
-        MediaControllerManager.getInstance(appContext, mediaSessionService)
-    }
-
-    DisposableEffect(lifecycle, mediaSessionService) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> controllerManager.initialize()
-                Lifecycle.Event.ON_STOP -> controllerManager.release()
-                else -> {}
-            }
-        }
-        lifecycle.addObserver(observer)
-        onDispose {
-            lifecycle.removeObserver(observer)
-            // It's crucial to release the controller when the DisposableEffect leaves composition
-            // to prevent leaks, especially if the Composable is disposed before ON_STOP.
-            controllerManager.release()
-        }
-    }
-
-    // You might consider using rememberSaveable if you need to preserve the controller
-    // across process death, but for most MediaController use cases, 'remember' is sufficient
-    // as the session token and service connection will be re-established.
-    return controllerManager.controller
-}
 
 @OptIn(UnstableApi::class)
 @Composable
