@@ -20,10 +20,10 @@ fun rememberCurrentMediaItemState(player: Player): CurrentMediaItemState {
 
 @UnstableApi
 class CurrentMediaItemState(private val player: Player) {
-
-    var mediaMetadata: MediaMetadata by mutableStateOf(MediaMetadata.EMPTY)
-        private set
+    
     var mediaId: String by mutableStateOf("")
+        private set
+    var mediaMetadata: MediaMetadata by mutableStateOf(MediaMetadata.EMPTY)
         private set
     var requestMetadata: MediaItem.RequestMetadata by mutableStateOf(MediaItem.RequestMetadata.EMPTY)
         private set
@@ -71,7 +71,6 @@ class CurrentMediaItemState(private val player: Player) {
     }
 
 }
-
 /**
  * A Composable that provides the raw MediaItem. It is simpler to use but
  * may trigger wider recompositions than the granular state holder.
