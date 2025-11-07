@@ -35,30 +35,65 @@ Since this isn't a hosted library yet, just copy these files into your project's
 * `rememberSeekBackButtonState.kt`
 * `rememberSeekForwardButtonState.kt`
 * `rememberCurrentMediaItemState.kt`
+* ...and any others you need!
 
-*(Don't forget to make the classes/functions **public** if you're putting them in a separate module!)*
+### 2. Create Your Main Screen
 
-### 2. Connect to Your Service
-
-In your main Composable (like `MainActivity` or `YourMainAppScreen`), call `rememberMediaController` with your `MediaSessionService` class as the generic type. This gives you a `State<MediaController?>`.
+Here is a complete example of a main screen with a `Scaffold`. It connects to the service, displays a `LazyColumn` of media items, and shows a `bottomBar` mini-player when the controller is ready.
 
 ```kotlin
-
 @SuppressLint("UnsafeOptInUsageError")
 @Composable
 fun YourMainAppScreen(modifier: Modifier = Modifier) {
-    
+
     // The magic line: Connects to your service
-    // Replace 'YourMediaSessionService' with your app's service
-    val mediaController by rememberMediaController<YourMediaSessionService>()
-    
-    // Show your player UI when the controller is connected
-    mediaController?.let { player ->
-        // Pass the player to your UI
-        YourMiniPlayer(player = player)
-    }
-    
+    // Replace 'PlayerLibrarySessionService' with your app's service
+    val mediaController by rememberMediaController<PlayerLibrarySessionService>()
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(title = { Text("List Of Media") })
+        },
+        content = {
+            LazyColumn(contentPadding = it) {  
+       
+                // Use the helper to list items
+                items(mediaController?.mediaItems ?: emptyList()) { mediaItem ->
+                    ListItem(
+                        headlineContent = {
+                            Text(mediaItem.mediaMetadata.title.toString() ?: "Unknown Title")
+                        },
+                        supportingContent = {
+                            Text(mediaItem.mediaMetadata.artist.toString() ?: "Unknown Artist")
+                        }
+                        // Add an onClick to play this item
+                        // modifier = Modifier.clickable { mediaController?.play(mediaItem) }
+                    )
+                }
+                
+            }
+        },
+        bottomBar = {
+            // Show the mini-player only when the controller is ready
+            mediaController?.let { player ->
+                YourFullScreenViewOrMiniPlayer(player)
+            }
+        }
+    )
 }
+```
+
+```kotlin
+/**
+ * A helper extension to easily get a List<MediaItem> from the Player.
+ * Place this in a 'PlayerExtensions.kt' file.
+ */
+private val Player.mediaItems: List<MediaItem>
+    get() = object : AbstractList<MediaItem>() {
+        override val size: Int
+            get() = mediaItemCount
+        override fun get(index: Int): MediaItem = getMediaItemAt(index)
+    }
 ```
 
 The MiniPlayer(that usually sits on the bottom of the screen) or Fullscreen view of your player
