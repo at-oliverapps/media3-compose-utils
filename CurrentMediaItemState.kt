@@ -20,8 +20,8 @@ fun rememberCurrentMediaItemState(player: Player): CurrentMediaItemState {
 
 @UnstableApi
 class CurrentMediaItemState(private val player: Player) {
-    
-    var mediaId: String by mutableStateOf("")
+
+    var mediaId: String by mutableStateOf(MediaItem.DEFAULT_MEDIA_ID)
         private set
     var mediaMetadata: MediaMetadata by mutableStateOf(MediaMetadata.EMPTY)
         private set
