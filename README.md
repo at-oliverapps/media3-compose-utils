@@ -59,8 +59,10 @@ fun YourMainAppScreen(modifier: Modifier = Modifier) {
     }
     
 }
+```
 
 The MiniPlayer(that usually sits on the bottom of the screen) or Fullscreen view of your player
+
 ```kotlin
 @OptIn(UnstableApi::class)
 @Composable
@@ -124,3 +126,4 @@ fun YourMiniPlayerOrFullScreenView(player: Player) {
         }
     }
 }
+```
