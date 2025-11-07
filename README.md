@@ -171,3 +171,13 @@ fun YourFullScreenViewOrMiniPlayer(player: Player) {
     }
 }
 ```
+
+## Acknowledgements
+
+The `rememberMediaController` utility was inspired by and adapted from the `rememberManagedMediaController` in the [RadioRoam project](https://github.com/oguzhaneksi/RadioRoam/blob/master/app/src/main/java/com/radioroam/android/ui/components/mediacontroller/MediaController.kt).
+
+This version, developed in collaboration with AI, was extensively refactored to improve reusability and developer experience. Key enhancements include:
+
+* **Generic Service Support:** The original implementation was refactored to be fully generic, removing the hardcoded service dependency. This allows it to connect to *any* `MediaSessionService` provided by the user.
+* **Idiomatic Compose API:** An `inline reified` overload (`rememberMediaController<Service>()`) was added for a cleaner, more "Compose-native" call syntax that eliminates boilerplate.
+* **Encapsulation:** The connection logic was further encapsulated, simplifying its use and management within any composable.
