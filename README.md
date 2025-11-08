@@ -43,11 +43,9 @@ Here is a complete example of a main screen with a `Scaffold`. It connects to th
 ```kotlin
 @SuppressLint("UnsafeOptInUsageError")
 @Composable
-fun YourMainAppScreen(modifier: Modifier = Modifier) {
+private fun YourMainAppScreen(modifier: Modifier = Modifier) {
 
-    // The magic line: Connects to your service
-    // Replace 'MediaSessionService' with your app's 'MediaSessionService' or 'MediaLibraryService' extension
-    val mediaController by rememberMediaController<MediaSessionService>()
+    val mediaController by rememberMediaController<PlayerLibrarySessionService>()
 
     Scaffold(
         topBar = {
@@ -58,15 +56,37 @@ fun YourMainAppScreen(modifier: Modifier = Modifier) {
 
                 itemsIndexed(mediaController?.mediaItems ?: emptyList()) { index, mediaItem ->
                     ListItem(
-                        modifier = Modifier.clickable { 
-                            //ideally you would use, mediaController?.seekToDefaultPosition(mediaController?.mediaItems?.indexOfFirst { it.mediaId == mediaItem.mediaId } ?: 0), as its more error proof and doesn't work with indexes 
+                        modifier = Modifier.clickable {
+                            /*
+                            ideally you would use
+                            mediaController?.run {
+                                clearMediaItems()
+                                addMediaItems(mediaItems)
+                                val index = mediaItems.indexOfFirst { it.mediaId == mediaItem.mediaId }
+                                if (index != -1) {
+                                    seekToDefaultPosition(index)
+                                    play()
+                                }
+                            }
+                            as its more error proof and doesn't work with indexes
+                            */
+
+                            //but for this simple example we use
                             mediaController?.seekToDefaultPosition(index)
                         },
+                        leadingContent = {
+                            //coil.compose.AsyncImage
+                            AsyncImage(
+                                modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant),
+                                model = mediaItem.mediaMetadata.artworkData ?: mediaItem.mediaMetadata.artworkUri,
+                                contentDescription = "List Item Artwork"
+                            )
+                        },
                         headlineContent = {
-                            Text(mediaItem.mediaMetadata.title.toString() ?: "Unknown Title")
+                            Text(mediaItem.mediaMetadata.title?.let { it.toString() } ?: "Unknown Title")
                         },
                         supportingContent = {
-                            Text(mediaItem.mediaMetadata.artist.toString() ?: "Unknown Artist")
+                            Text(mediaItem.mediaMetadata.artist?.let { it.toString() } ?: "Unknown Artist")
                         }
                     )
                 }
@@ -74,9 +94,9 @@ fun YourMainAppScreen(modifier: Modifier = Modifier) {
             }
         },
         bottomBar = {
-            // this should be enough to get a playbar up and running
-            mediaController?.let {
-                YourFullScreenViewOrMiniPlayer(it)
+
+            mediaController?.run {
+                MiniPlayer(this)
             }
 
             //but in some rare circumstances it has to be initialised like this
@@ -84,12 +104,14 @@ fun YourMainAppScreen(modifier: Modifier = Modifier) {
             mediaController?.let { player ->
                 val currentMediaItem = rememberCurrentMediaItemState(player)
                 currentMediaItem.run {
-                    YourFullScreenViewOrMiniPlayer(player)
+                    MiniPlayer(player)
                 }
             }
             */
         }
     )
+
+
 }
 ```
 
@@ -180,6 +202,7 @@ private fun MiniPlayer(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             content = {
+                //coil.compose.AsyncImage
                 AsyncImage(model = artwork, contentDescription = "Player Artwork", modifier = Modifier.size(40.dp).background(
                     MaterialTheme.colorScheme.surfaceVariant))
                 Column(modifier = Modifier.weight(1f)) {
