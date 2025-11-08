@@ -113,11 +113,12 @@ private val Player.mediaItems: List<MediaItem>
 The MiniPlayer(that usually sits on the bottom of the screen) or Fullscreen view of your player
 
 ```kotlin
+//Combining all the functions
 @OptIn(UnstableApi::class)
 @Composable
-fun YourFullScreenViewOrMiniPlayer(player: Player) {
+private fun MiniPlayer(player: Player) {
 
-    // --- Default Media3 State Helpers ---
+    //common default compose media3 methods and some more
     val playPauseButtonState = rememberPlayPauseButtonState(player)
     val previousButtonState = rememberPreviousButtonState(player)
     val nextButtonState = rememberNextButtonState(player)
@@ -125,60 +126,109 @@ fun YourFullScreenViewOrMiniPlayer(player: Player) {
     // val defaultSeekBackButtonState = androidx.media3.ui.compose.state.rememberSeekBackButtonState(player)
     // val defaultSeekForwardButtonState = androidx.media3.ui.compose.state.rememberSeekForwardButtonState(player)
 
-    // --- Custom Utils from this Repo ---
 
     // These listen for isMediaItemDynamic, allowing seek in live DVR streams
     val seekBackButtonState = rememberSeekBackButtonState(player)
     val seekForwardButtonState = rememberSeekForwardButtonState(player)
-    
+
     // This gives you easy access to metadata
     val mediaMetadataState = rememberMediaMetadata(player)
+
     // This gives you the current MediaItem object
     val currentMediaItem = rememberCurrentMediaItemState(player)
 
-    // --- Build Your UI ---
-    Row {
+    MiniPlayer(
+        isPlaying = playPauseButtonState.showPlay,
+        artwork = mediaMetadataState.artworkData ?: mediaMetadataState.artworkUri,
+        title = mediaMetadataState.title,
+        artist = mediaMetadataState.artist,
+        album = mediaMetadataState.albumTitle,
+        onRewind = if (seekBackButtonState.isEnabled) seekBackButtonState::onClick else null,
+        onPrevious = if (previousButtonState.isEnabled) previousButtonState::onClick else null,
+        onTogglePlayback = if (playPauseButtonState.isEnabled) playPauseButtonState::onClick else null,
+        onNext = if (nextButtonState.isEnabled) nextButtonState::onClick else null,
+        onForward = if (seekForwardButtonState.isEnabled) seekForwardButtonState::onClick else null,
+    )
 
-        //Coil AsyncImage
-        AsyncImage(
-            model = mediaMetadataState.artworkData ?: mediaMetadataState.artworkUri, 
-            contentDescription = "Player Artwork"
+}
+```
+
+```kotlin
+//Render the ui
+@Composable
+private fun MiniPlayer(
+    //Basic
+    isPlaying: Boolean,
+
+    //Basic Metadata
+    artwork: Any?,
+    title: CharSequence?,
+    artist: CharSequence?,
+    album: CharSequence?,
+
+    //Basic Buttons
+    onRewind: (() -> Unit)?,
+    onPrevious: (() -> Unit)?,
+    onTogglePlayback: (() -> Unit)?,
+    onNext: (() -> Unit)?,
+    onForward: (() -> Unit)?,
+) = Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+    Column {
+
+        Row(
+            modifier = Modifier.padding(8.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            content = {
+                AsyncImage(model = artwork, contentDescription = "Player Artwork", modifier = Modifier.size(40.dp).background(
+                    MaterialTheme.colorScheme.surfaceVariant))
+                Column(modifier = Modifier.weight(1f)) {
+                    title?.let {
+                        Text(it.toString(), color = MaterialTheme.colorScheme.onSurface)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        artist?.let {
+                            Text(it.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        album?.let {
+                            Text(it.toString(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+
+                }
+            }
         )
 
-        Column {
-            Text(mediaMetadataState.title?.toString() ?: "No Title")
-            Text(mediaMetadataState.artist?.toString() ?: "Unknown Artist")
-            Text(mediaMetadataState.albumTitle?.toString() ?: "Unknown Album")
-        }
+        HorizontalDivider()
 
-        Row {
-            Button(
-                onClick = seekBackButtonState::onClick,
-                enabled = seekBackButtonState.isEnabled,
-                content = { Text("FR") }
-            )
-            Button(
-                onClick = previousButtonState::onClick,
-                enabled = previousButtonState.isEnabled,
-                content = { Text("Prev") }
-            )
-            Button(
-                onClick = playPauseButtonState::onClick,
-                content = { 
-                    Text(if (playPauseButtonState.showPlay) "Play" else "Pause") 
+        Row(
+            modifier = Modifier.padding(8.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            content = {
+
+                onRewind?.let {
+                    IconButton(onClick = it, content = { Icon(imageVector = Icons.Default.FastRewind, contentDescription = "Fast Rewind") })
                 }
-            )
-            Button(
-                onClick = nextButtonState::onClick,
-                enabled = nextButtonState.isEnabled,
-                content = { Text("Next") }
-            )
-            Button(
-                onClick = seekForwardButtonState::onClick,
-                enabled = seekForwardButtonState.isEnabled,
-                content = { Text("FF") }
-            )
-        }
+
+                onPrevious?.let {
+                    IconButton(onClick = it, content = { Icon(imageVector = Icons.Default.SkipPrevious, contentDescription = "Previous") })
+                }
+
+                onTogglePlayback?.let {
+                    IconButton(onClick = it, content = { Icon(imageVector = if (isPlaying) Icons.Default.PlayArrow else Icons.Default.Pause, contentDescription = if (isPlaying) "Play" else "Pause") })
+                }
+
+                onNext?.let {
+                    IconButton(onClick = it, content = { Icon(imageVector = Icons.Default.SkipNext, contentDescription = "Next") })
+                }
+
+                onForward?.let {
+                    IconButton(onClick = it, content = { Icon(imageVector = Icons.Default.FastForward, contentDescription = "Fast Forward") })
+                }
+
+            }
+        )
+
     }
 }
 ```
