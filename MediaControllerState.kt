@@ -138,10 +138,7 @@ class MediaControllerManager<S : MediaSessionService> private constructor(
         factory?.let {
             if (it.isDone) {
                 try {
-                    val currentController = it.get()
                     MediaController.releaseFuture(it)
-                    // If you had a listener on the controller itself, remove it here
-                    // For example: currentController.removeListener(myListener)
                 } catch (e: Exception) {
                     // Log or handle the exception if getting the controller to release it fails
                 }
