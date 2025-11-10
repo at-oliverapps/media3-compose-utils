@@ -45,7 +45,8 @@ Here is a complete example of a main screen with a `Scaffold`. It connects to th
 @Composable
 private fun YourMainAppScreen(modifier: Modifier = Modifier) {
 
-    val mediaController by rememberMediaController<PlayerLibrarySessionService>()
+    //The magic starts here , this is your bridge between your service and the ui replace "PlayerService" with either an extension of "MediaLibraryService" or a "MediaSessionService"
+    val mediaController by rememberMediaController<PlayerService>()
 
     Scaffold(
         topBar = {
