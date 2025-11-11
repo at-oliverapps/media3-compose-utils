@@ -91,7 +91,7 @@ private class PlaybackService : MediaSessionService() {
 }
 ```
 
-###Your MainActivity
+### Your typical `MainActivity` or the class hosting your very root composable
 ```kotlin
 //this is just your usual MainActivity
 private class YourMainActivity : ComponentActivity() {
@@ -107,7 +107,7 @@ private class YourMainActivity : ComponentActivity() {
 ```
 
 
-###Your Main `App()` composable 
+### Your Main `App()` composable 
 ```kotlin
 @SuppressLint("UnsafeOptInUsageError")
 @Composable
@@ -173,7 +173,7 @@ private fun App() {
 }
 ```
 
-###The MiniPlayer(PlayBar)
+### The MiniPlayer(PlayBar)
 ```kotlin
 //passing the player as a lambda prevents it from recomposing the MiniPlayer every time something inside the player object itself changes and since we don't observe the player directly this is the right way to do it
 @OptIn(UnstableApi::class)
@@ -219,7 +219,7 @@ private fun MiniPlayer(player: () -> Player) {
 
 }
 ```
-
+---
 ```kotlin
 //here you should ideally also pass everything as lambdas to prevent the entire composable from recomposing but in such small composable it doesn't really matter but its good practice
 @Composable
@@ -317,6 +317,7 @@ private fun MiniPlayer(
 }
 ```
 
+## A small helper function to get the current playlist from the player
 ```kotlin
 /**
  * A helper extension to easily get a List<MediaItem> from the Player.
