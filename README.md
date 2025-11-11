@@ -35,7 +35,7 @@ Since this isn't a hosted library yet, just copy these files into your project's
 * `SeekBackButtonState.kt`
 * `SeekForwardButtonState.kt`
 * ...and any others you need!
-
+---
 ## 2. The MediaSessionService Setup
 if you arent already using a service i highly recommend you to switch, this is the bare minimum you need to make your `PlaybackService` run. This service holds the `ExoPlayer` and the `MediaSession`, allowing background playback and external control.
 
@@ -90,10 +90,9 @@ private class PlaybackService : MediaSessionService() {
     }
 }
 ```
-
+---
 ### Your typical `MainActivity` or the class hosting your very root composable
 ```kotlin
-//this is just your usual MainActivity
 private class YourMainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,8 +104,7 @@ private class YourMainActivity : ComponentActivity() {
     }
 }
 ```
-
-
+---
 ### Your Main `App()` composable 
 ```kotlin
 @SuppressLint("UnsafeOptInUsageError")
@@ -172,7 +170,7 @@ private fun App() {
 
 }
 ```
-
+---
 ### The MiniPlayer(PlayBar)
 ```kotlin
 //passing the player as a lambda prevents it from recomposing the MiniPlayer every time something inside the player object itself changes and since we don't observe the player directly this is the right way to do it
@@ -219,7 +217,6 @@ private fun MiniPlayer(player: () -> Player) {
 
 }
 ```
----
 ```kotlin
 //here you should ideally also pass everything as lambdas to prevent the entire composable from recomposing but in such small composable it doesn't really matter but its good practice
 @Composable
