@@ -36,17 +36,85 @@ Since this isn't a hosted library yet, just copy these files into your project's
 * `SeekForwardButtonState.kt`
 * ...and any others you need!
 
-### 2. Create Your Main Screen
+## 2. The MediaSessionService Setup
+if you arent already using a service i highly recommend you to switch, this is the bare minimum you need to make your `PlaybackService` run. This service holds the `ExoPlayer` and the `MediaSession`, allowing background playback and external control.
 
-Here is a complete example of a main screen with a `Scaffold`. It connects to the service, displays a `LazyColumn` of media items, and shows a `bottomBar` mini-player when the controller is ready.
+```kotlin
+@UnstableApi
+private class PlaybackService : MediaSessionService() {
 
+    private lateinit var mediaSession: MediaSession
+
+    private val player: ExoPlayer by lazy {
+        ExoPlayer.Builder(this).build()
+            .apply {
+                
+                // this isn't necessary its just there so you can seek through the playing contents of a station faster
+                setSeekBackIncrementMs( 30*1000L )
+                setSeekForwardIncrementMs( 30*1000L )
+                
+                setAudioAttributes(AudioAttributes.Builder().setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).setUsage(C.USAGE_MEDIA).build(), true)
+                setHandleAudioBecomingNoisy(true)
+                setWakeMode(WAKE_MODE_NETWORK)
+                
+            }
+    }
+
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
+        return mediaSession
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+
+        mediaSession = MediaSession.Builder(this, player).build()
+
+        player.run {
+            addMediaItems(
+                listOf(
+                    MediaItem.Builder().setMediaId("1").setUri("[http://nebula.shoutca.st:8545/stream](http://nebula.shoutca.st:8545/stream)").setMediaMetadata(MediaMetadata.Builder().setTitle("ZFM").setArtworkUri("[https://nz.radio.net/300/zfm.png?version=a00d95bdda87861f1584dc30caffb0f9](https://nz.radio.net/300/zfm.png?version=a00d95bdda87861f1584dc30caffb0f9)".toUri()).build()).build(),
+                    MediaItem.Builder().setMediaId("2").setUri("[https://live.visir.is/hls-radio/fm957/chunklist_DVR.m3u8](https://live.visir.is/hls-radio/fm957/chunklist_DVR.m3u8)").setMediaMetadata(MediaMetadata.Builder().setTitle("FM 957").setArtworkUri("[https://www.visir.is/mi/300x300/ci/ef50c5c5-6abf-4dfe-910c-04d88b6bdaef.png](https://www.visir.is/mi/300x300/ci/ef50c5c5-6abf-4dfe-910c-04d88b6bdaef.png)".toUri()).build()).build()
+                )
+            )
+        }
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaSession.run {
+            release()
+            player.stop()
+            player.release()
+        }
+    }
+}
+```
+
+###Your MainActivity
+```kotlin
+//this is just your usual MainActivity
+private class YourMainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            //you just init your composable as usual no extra ordinary is required for the mediaController to function
+            App()
+        }
+    }
+}
+```
+
+
+###Your Main `App()` composable 
 ```kotlin
 @SuppressLint("UnsafeOptInUsageError")
 @Composable
-private fun YourMainAppScreen(modifier: Modifier = Modifier) {
+private fun App() {
 
-    //The magic starts here , this is your bridge between your service and the ui replace "PlayerService" with either an extension of "MediaLibraryService" or a "MediaSessionService"
-    val mediaController by rememberMediaController<PlayerService>()
+    //The magic starts here, this is your bridge between your service and the ui replace "PlayerService" with either an extension of "MediaLibraryService" or a "MediaSessionService"
+    val mediaController by rememberMediaController<PlaybackService>()
 
     Scaffold(
         topBar = {
@@ -78,37 +146,26 @@ private fun YourMainAppScreen(modifier: Modifier = Modifier) {
                         leadingContent = {
                             //coil.compose.AsyncImage
                             AsyncImage(
-                                modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant),
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
                                 model = mediaItem.mediaMetadata.artworkData ?: mediaItem.mediaMetadata.artworkUri,
                                 contentDescription = "List Item Artwork"
                             )
                         },
                         headlineContent = {
-                            Text(mediaItem.mediaMetadata.title?.let { it.toString() } ?: "Unknown Title")
+                            Text(mediaItem.mediaMetadata.title?.toString() ?: "Unknown Title")
                         },
-                        supportingContent = {
-                            Text(mediaItem.mediaMetadata.artist?.let { it.toString() } ?: "Unknown Artist")
-                        }
+                        supportingContent = mediaItem.mediaMetadata.title?.let { { Text(it.toString()) } }
                     )
                 }
 
             }
         },
         bottomBar = {
-
             mediaController?.run {
-                MiniPlayer(this)
+                MiniPlayer({ this })
             }
-
-            //but in some rare circumstances it has to be initialised like this
-            /*
-            mediaController?.let { player ->
-                val currentMediaItem = rememberCurrentMediaItemState(player)
-                currentMediaItem.run {
-                    MiniPlayer(player)
-                }
-            }
-            */
         }
     )
 
@@ -116,30 +173,14 @@ private fun YourMainAppScreen(modifier: Modifier = Modifier) {
 }
 ```
 
+###The MiniPlayer(PlayBar)
 ```kotlin
-/**
- * A helper extension to easily get a List<MediaItem> from the Player.
- * Place this in a 'PlayerExtensions.kt' file.
- *
- * You shouldn't ideally use this method as you prob get your data from a database
- * and manage your list by yourself and for my use this method seems unstable
- * but its good if you just want your app up and running 
- */
-private val Player.mediaItems: List<MediaItem>
-    get() = object : AbstractList<MediaItem>() {
-        override val size: Int
-            get() = mediaItemCount
-        override fun get(index: Int): MediaItem = getMediaItemAt(index)
-    }
-```
-
-The MiniPlayer(that usually sits on the bottom of the screen) or Fullscreen view of your player
-
-```kotlin
-//Combining all the functions
+//passing the player as a lambda prevents it from recomposing the MiniPlayer every time something inside the player object itself changes and since we don't observe the player directly this is the right way to do it
 @OptIn(UnstableApi::class)
 @Composable
-private fun MiniPlayer(player: Player) {
+private fun MiniPlayer(player: () -> Player) {
+
+    val player = player()
 
     //common default compose media3 methods and some more
     val playPauseButtonState = rememberPlayPauseButtonState(player)
@@ -149,7 +190,7 @@ private fun MiniPlayer(player: Player) {
     // val defaultSeekBackButtonState = androidx.media3.ui.compose.state.rememberSeekBackButtonState(player)
     // val defaultSeekForwardButtonState = androidx.media3.ui.compose.state.rememberSeekForwardButtonState(player)
 
-
+    //common custom compose media3 methods and some more
     // These listen for isMediaItemDynamic, allowing seek in live DVR streams
     val seekBackButtonState = rememberSeekBackButtonState(player)
     val seekForwardButtonState = rememberSeekForwardButtonState(player)
@@ -157,11 +198,14 @@ private fun MiniPlayer(player: Player) {
     // This gives you easy access to metadata
     val mediaMetadataState = rememberMediaMetadata(player)
 
-    // This gives you the current MediaItem object
-    val currentMediaItem = rememberCurrentMediaItemState(player)
+    //This gives you the current MediaItem object
+    //a basic version of a mediaItem without buildUpon() and all the other functions just the basics
+    //val currentMediaItemState = rememberCurrentMediaItemState(player)
+    //if you prefer to get access to the entire mediaItem and all its functions you should use this method instead as it returns a real State<MediaItem?>
+    //val currentMediaItem by rememberCurrentMediaItem(player)
 
     MiniPlayer(
-        isPlaying = playPauseButtonState.showPlay,
+        isPlaying = !playPauseButtonState.showPlay,
         artwork = mediaMetadataState.artworkData ?: mediaMetadataState.artworkUri,
         title = mediaMetadataState.title,
         artist = mediaMetadataState.artist,
@@ -177,7 +221,7 @@ private fun MiniPlayer(player: Player) {
 ```
 
 ```kotlin
-//Render the ui
+//here you should ideally also pass everything as lambdas to prevent the entire composable from recomposing but in such small composable it doesn't really matter but its good practice
 @Composable
 private fun MiniPlayer(
     //Basic
@@ -199,13 +243,18 @@ private fun MiniPlayer(
     Column {
 
         Row(
-            modifier = Modifier.padding(8.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             content = {
                 //coil.compose.AsyncImage
-                AsyncImage(model = artwork, contentDescription = "Player Artwork", modifier = Modifier.size(40.dp).background(
-                    MaterialTheme.colorScheme.surfaceVariant))
+                AsyncImage(model = artwork, contentDescription = "Player Artwork", modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        MaterialTheme.colorScheme.surfaceVariant
+                    ))
                 Column(modifier = Modifier.weight(1f)) {
                     title?.let {
                         Text(it.toString(), color = MaterialTheme.colorScheme.onSurface)
@@ -226,7 +275,9 @@ private fun MiniPlayer(
         HorizontalDivider()
 
         Row(
-            modifier = Modifier.padding(8.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
             content = {
 
@@ -239,7 +290,16 @@ private fun MiniPlayer(
                 }
 
                 onTogglePlayback?.let {
-                    IconButton(onClick = it, content = { Icon(imageVector = if (isPlaying) Icons.Default.PlayArrow else Icons.Default.Pause, contentDescription = if (isPlaying) "Play" else "Pause") })
+                    FilledIconButton(
+                        shape = if (isPlaying) IconButtonDefaults.smallSquareShape else IconButtonDefaults.smallRoundShape,
+                        onClick = it,
+                        content = {
+                            Icon(
+                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = if (isPlaying) "Pause" else "Play"
+                            )
+                        }
+                    )
                 }
 
                 onNext?.let {
@@ -255,6 +315,23 @@ private fun MiniPlayer(
 
     }
 }
+```
+
+```kotlin
+/**
+ * A helper extension to easily get a List<MediaItem> from the Player.
+ * Place this in a 'PlayerExtensions.kt' file.
+ *
+ * You shouldn't ideally use this method as you prob get your data from a database
+ * and manage your list by yourself and for my use this method seems unstable
+ * but its good if you just want your app up and running 
+ */
+private val Player.mediaItems: List<MediaItem>
+    get() = object : AbstractList<MediaItem>() {
+        override val size: Int
+            get() = mediaItemCount
+        override fun get(index: Int): MediaItem = getMediaItemAt(index)
+    }
 ```
 
 ## Acknowledgements
