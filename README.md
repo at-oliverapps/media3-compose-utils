@@ -2,6 +2,8 @@
 
 This is a collection of files and code that helps you get up and running with a Jetpack Compose Media3 app in no time.
 
+I don't have the understanding of software licenses so treat this text as the current license 
+"You are free to use my files and code as you like but I want you to notify me if you change some code and make them better so I can clone the new code and implement it into my files unless you keep the modified files strictly to yourself and don't share them with anyone"
 ![License](https://img.shields.io/badge/license-Apache_2.0-blue.svg) ![Platform](https://img.shields.io/badge/platform-Android-brightgreen.svg)
 
 ---
