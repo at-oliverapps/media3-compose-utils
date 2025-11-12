@@ -23,23 +23,20 @@ import com.google.common.util.concurrent.MoreExecutors
 import kotlin.reflect.KClass
 
 /**
- * A Composable function that provides a MediaController instance for a given MediaSessionService.
+ * A Composable function that safely connects to a background [MediaSessionService] 
+ * and provides the resulting [MediaController] instance.
  *
  * This function handles the lifecycle of the MediaController, ensuring it's initialized when the
- * Composable enters the composition and released when it leaves, or when the associated lifecycle
- * event occurs.
+ * Composable enters the composition and released when it leaves (or on stop/dispose),
+ * thus preventing memory leaks.
  *
- * @param S The type of your [MediaSessionService] subclass.
- * @param mediaSessionService The [KClass] of your [MediaSessionService] subclass. This is required to
- * construct the [ComponentName] for the [SessionToken].
+ * @param S The type of your [MediaSessionService] subclass. This type is used internally 
+ * to establish the connection via a [SessionToken].
  * @param lifecycle The [Lifecycle] of the owner of this MediaController. Defaults to the lifecycle
  * of the [LocalLifecycleOwner].
- * @return A [State] object containing the [MediaController] instance. The Composable will
- * automatically re-compose whenever the state changes. The value will be `null` if the
- * controller is not yet connected or has been released.
- * NOTE: MediaController is under the hood just an PLayer(exoplayer) so you have access to the same methods as you normally would in that case
+ * @return A [State] object containing the [MediaController] instance (which implements the 
+ * [Player] interface). The value will be `null` if the controller is not yet connected or has been released.
  */
-
 @OptIn(UnstableApi::class)
 @Composable
 inline fun <reified S : MediaSessionService> rememberMediaController(
