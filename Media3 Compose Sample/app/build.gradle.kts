@@ -5,12 +5,14 @@ plugins {
 }
 
 android {
+    //it would also be smart to change the namespace to your own structure
     namespace = "io.oliverapps.sample.media3.compose"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
+        //you would usually like to change the application id to your own domain
         applicationId = "io.oliverapps.sample.media3.compose"
         minSdk = 29
         targetSdk = 36
