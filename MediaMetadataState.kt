@@ -12,6 +12,10 @@ import androidx.media3.common.listen
 import androidx.media3.common.util.UnstableApi
 import com.google.common.collect.ImmutableList
 
+//use the new androidx.media3.ui.compose.state.rememberCurrentMediaItemState instead 
+//see https://github.com/at-oliverapps/media3-compose-utils/blob/main/Media3ComposeSample/mobile/src/main/java/io/oliverapps/sample/media3/compose/MIniPlayer.kt for usecases
+
+/*
 @UnstableApi
 @Composable
 fun rememberMediaMetadata(player: Player): MediaMetadataState {
@@ -318,3 +322,4 @@ class MediaMetadataState(private val player: Player) {
         // then Nothing means this function will not return normally.
     }
 }
+*/
