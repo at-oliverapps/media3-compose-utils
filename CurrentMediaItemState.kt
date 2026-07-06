@@ -10,7 +10,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.listen
 import androidx.media3.common.util.UnstableApi
 
-//use the new androidx.media3.compose.rememberMediaItemState() instead 
+//use the new androidx.media3.ui.compose.state.rememberCurrentMediaItemState instead 
 //see https://github.com/at-oliverapps/media3-compose-utils/blob/main/Media3ComposeSample/mobile/src/main/java/io/oliverapps/sample/media3/compose/MIniPlayer.kt for usecases
 
 /*
