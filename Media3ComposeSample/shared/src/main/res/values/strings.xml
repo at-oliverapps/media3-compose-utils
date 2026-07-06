@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Media3 Compose Sample</string>
+    <string name="media_item_list">Media Item List</string>
+</resources>

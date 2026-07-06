@@ -1,0 +1,13 @@
+[versions]
+wear-compose = "1.7.0-alpha05"
+wearToolingPreview = "1.0.0"
+coreSplashscreen = "1.2.0"
+wearInput = "1.2.0"
+
+[libraries]
+compose-material3 = { group = "androidx.wear.compose", name = "compose-material3", version.ref = "wear-compose" }
+compose-ui-tooling = { group = "androidx.wear.compose", name = "compose-ui-tooling", version.ref = "wear-compose" }
+compose-foundation = { group = "androidx.wear.compose", name = "compose-foundation", version.ref = "wear-compose" }
+wear-tooling-preview = { group = "androidx.wear", name = "wear-tooling-preview", version.ref = "wearToolingPreview" }
+core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
+wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
