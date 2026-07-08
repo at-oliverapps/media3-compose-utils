@@ -10,7 +10,7 @@ I don't have the understanding of software licenses so treat this text as the cu
 
 ## 🤔 What This Solves
 
-The official `media3-ui-compose` library provides great state helpers like `rememberPlayPauseButtonState(player)`, but it leaves you with one big question:
+The official `media3-ui-compose` library provides great state helpers like `rememberPlayPauseButtonState(player)` or a bunch of other convinience methods, but it leaves you with one big question:
 
 **How do you get the `player` object from your `MediaSessionService` in a clean, composable way?**
 
@@ -19,9 +19,7 @@ This usually requires a lot of boilerplate code (managing `SessionToken`, `Liste
 ## ✨ Features
 
 * **`rememberMediaController`:** A one-line Composable function to safely connect to your `MediaSessionService` and get a `Player` instance.
-* **`rememberMediaMetadata`:** A state holder that gives you direct access to `metadata.title`, `metadata.artist`, etc., and automatically updates your UI.
 * **"Smart" Seek Buttons:** Custom `rememberSeekBackButtonState` and `rememberSeekForwardButtonState` that correctly handle seeking in **Live/DVR streams** (which the default Media3 functions do not).
-* **`rememberCurrentMediaItemState`:** A simple state holder for the current `MediaItem`.
 
 ---
 
@@ -31,9 +29,9 @@ This usually requires a lot of boilerplate code (managing `SessionToken`, `Liste
 
 Since this isn't a hosted library yet, just copy these files into your project's `utils` or `player` package:
 
-* `CurrentMediaItemState.kt`
+* `CurrentMediaItemState.kt` use the new official `androidx.media3.ui.compose.state.rememberCurrentMediaItemState.mediaItem` instead
 * `MediaControllerState.kt`
-* `MediaMetadataState.kt`
+* `MediaMetadataState.kt` use the new official `androidx.media3.ui.compose.state.rememberCurrentMediaItemState.mediaMetadata` instead
 * `SeekBackButtonState.kt`
 * `SeekForwardButtonState.kt`
 * ...and any others you need!
@@ -114,66 +112,30 @@ private class YourMainActivity : ComponentActivity() {
 
 ### Your Main `App()` composable 
 ```kotlin
-@SuppressLint("UnsafeOptInUsageError")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun App() {
+fun App() {
 
     //The magic starts here, this is your bridge between your service and the ui replace "PlayerService" with either an extension of "MediaLibraryService" or a "MediaSessionService"
     val mediaController by rememberMediaController<PlaybackService>()
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(title = { Text("List Of Media") })
-        },
-        content = {
-            LazyColumn(contentPadding = it) {
-
-                itemsIndexed(mediaController?.mediaItems ?: emptyList()) { index, mediaItem ->
-                    ListItem(
-                        modifier = Modifier.clickable {
-                            /*
-                            ideally you would use
-                            mediaController?.run {
-                                clearMediaItems()
-                                addMediaItems(mediaItems)
-                                val index = mediaItems.indexOfFirst { it.mediaId == mediaItem.mediaId }
-                                if (index != -1) {
-                                    seekToDefaultPosition(index)
-                                    play()
-                                }
-                            }
-                            as its more error proof and doesn't work with indexes
-                            */
-
-                            //but for this simple example we use
-                            mediaController?.seekToDefaultPosition(index)
-                        },
-                        leadingContent = {
-                            //coil.compose.AsyncImage
-                            AsyncImage(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                model = mediaItem.mediaMetadata.artworkData ?: mediaItem.mediaMetadata.artworkUri,
-                                contentDescription = "List Item Artwork"
-                            )
-                        },
-                        headlineContent = {
-                            Text(mediaItem.mediaMetadata.title?.toString() ?: "Unknown Title")
-                        },
-                        supportingContent = mediaItem.mediaMetadata.title?.let { { Text(it.toString()) } }
-                    )
-                }
-
+    // as media3 have adapted their components to use "Player?" instead of "Player" we don't need to wrap the entire app in a ?.let{} anymore
+    Surface {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(title = { Text(stringResource(shared.string.media_item_list)) })
+            },
+            content = { padding ->
+                MediaItemList(paddingValues = padding, player = { mediaController })
+            },
+            bottomBar = {
+                MiniPlayer(
+                    modifier = Modifier.padding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom).asPaddingValues()),
+                    player = { mediaController }
+                )
             }
-        },
-        bottomBar = {
-            mediaController?.run {
-                MiniPlayer({ this })
-            }
-        }
-    )
-
+        )
+    }
 
 }
 ```
@@ -182,39 +144,34 @@ private fun App() {
 
 ### The MiniPlayer(PlayBar)
 ```kotlin
+
 //passing the player as a lambda prevents it from recomposing the MiniPlayer every time something inside the player object itself changes and since we don't observe the player directly this is the right way to do it
 @OptIn(UnstableApi::class)
 @Composable
-private fun MiniPlayer(player: () -> Player) {
+fun MiniPlayer(
+    modifier: Modifier= Modifier,
+    player: () -> Player?
+) {
 
+    //we are just converting the lambda to a non lambda for convinience
     val player = player()
 
-    //common default compose media3 methods and some more
+    //the methods to control
     val playPauseButtonState = rememberPlayPauseButtonState(player)
     val previousButtonState = rememberPreviousButtonState(player)
     val nextButtonState = rememberNextButtonState(player)
-    // The default seek buttons (if you want them)
-    // val defaultSeekBackButtonState = androidx.media3.ui.compose.state.rememberSeekBackButtonState(player)
-    // val defaultSeekForwardButtonState = androidx.media3.ui.compose.state.rememberSeekForwardButtonState(player)
-
-    //common custom compose media3 methods and some more
-    // These listen for isMediaItemDynamic, allowing seek in live DVR streams
     val seekBackButtonState = rememberSeekBackButtonState(player)
     val seekForwardButtonState = rememberSeekForwardButtonState(player)
 
-    // This gives you easy access to metadata
-    val mediaMetadataState = rememberMediaMetadata(player)
-
-    //This gives you the current MediaItem object
-    //a basic version of a mediaItem without buildUpon() and all the other functions just the basics
-    //val currentMediaItemState = rememberCurrentMediaItemState(player)
-    //if you prefer to get access to the entire mediaItem and all its functions you should use this method instead as it returns a real State<MediaItem?>
-    //val currentMediaItem by rememberCurrentMediaItem(player)
+    //and retrieve metadata
+    val mediaItemState = rememberCurrentMediaItemState(player)
+    val mediaMetadataState = mediaItemState.mediaMetadata
 
     MiniPlayer(
+        modifier = modifier,
         isPlaying = !playPauseButtonState.showPlay,
         artwork = mediaMetadataState.artworkData ?: mediaMetadataState.artworkUri,
-        title = mediaMetadataState.title,
+        title = mediaMetadataState.title ?: mediaMetadataState.station,
         artist = mediaMetadataState.artist,
         album = mediaMetadataState.albumTitle,
         onRewind = if (seekBackButtonState.isEnabled) seekBackButtonState::onClick else null,
@@ -228,8 +185,11 @@ private fun MiniPlayer(player: () -> Player) {
 ```
 ```kotlin
 //here you should ideally also pass everything as lambdas to prevent the entire composable from recomposing but in such small composable it doesn't really matter but its good practice
+@kotlin.OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun MiniPlayer(
+    modifier: Modifier = Modifier,
+
     //Basic
     isPlaying: Boolean,
 
@@ -246,8 +206,9 @@ private fun MiniPlayer(
     onNext: (() -> Unit)?,
     onForward: (() -> Unit)?,
 ) = Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-    Column {
+    Column(modifier = modifier) {
 
+        //Metadata
         Row(
             modifier = Modifier
                 .padding(8.dp)
@@ -257,7 +218,7 @@ private fun MiniPlayer(
             content = {
                 //coil.compose.AsyncImage
                 AsyncImage(model = artwork, contentDescription = "Player Artwork", modifier = Modifier
-                    .size(40.dp)
+                    .size(48.dp)
                     .background(
                         MaterialTheme.colorScheme.surfaceVariant
                     ))
@@ -280,41 +241,57 @@ private fun MiniPlayer(
 
         HorizontalDivider()
 
+        //Controls
         Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(8.dp).fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
             content = {
 
                 onRewind?.let {
-                    IconButton(onClick = it, content = { Icon(imageVector = Icons.Default.FastRewind, contentDescription = "Fast Rewind") })
-                }
+                    IconButton(
+                        onClick = it,
+                        content = {
+                            Icon(imageVector = Constants.Mobile.Icon.FastRewind, contentDescription = stringResource(Constants.Mobile.String.FastRewind))
+                        }
+                    )
+                } ?: Box(modifier = Modifier.minimumInteractiveComponentSize())
 
                 onPrevious?.let {
-                    IconButton(onClick = it, content = { Icon(imageVector = Icons.Default.SkipPrevious, contentDescription = "Previous") })
-                }
+                    IconButton(
+                        onClick = it,
+                        content = {
+                            Icon(imageVector = Constants.Mobile.Icon.Previous, contentDescription = stringResource(Constants.Mobile.String.Previous))
+                        }
+                    )
+                } ?: Box(modifier = Modifier.minimumInteractiveComponentSize())
 
                 onTogglePlayback?.let {
                     FilledIconButton(
                         shape = if (isPlaying) IconButtonDefaults.smallSquareShape else IconButtonDefaults.smallRoundShape,
                         onClick = it,
                         content = {
-                            Icon(
-                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = if (isPlaying) "Pause" else "Play"
-                            )
+                            Icon(imageVector = isPlaying.PlayPauseIcon, contentDescription = stringResource(isPlaying.PlayPauseContentDescription))
                         }
                     )
-                }
+                } ?: Box(modifier = Modifier.minimumInteractiveComponentSize())
 
                 onNext?.let {
-                    IconButton(onClick = it, content = { Icon(imageVector = Icons.Default.SkipNext, contentDescription = "Next") })
-                }
+                    IconButton(
+                        onClick = it,
+                        content = {
+                            Icon(imageVector = Constants.Mobile.Icon.Next, contentDescription = stringResource(Constants.Mobile.String.Next))
+                        }
+                    )
+                } ?: Box(modifier = Modifier.minimumInteractiveComponentSize())
 
                 onForward?.let {
-                    IconButton(onClick = it, content = { Icon(imageVector = Icons.Default.FastForward, contentDescription = "Fast Forward") })
-                }
+                    IconButton(
+                        onClick = it,
+                        content = { 
+                            Icon(imageVector = Constants.Mobile.Icon.FastForward, contentDescription = stringResource(Constants.Mobile.String.FastForward))
+                        }
+                    )
+                } ?: Box(modifier = Modifier.minimumInteractiveComponentSize())
 
             }
         )
@@ -325,6 +302,7 @@ private fun MiniPlayer(
 
 ## A small helper function to get the current playlist from the player
 ```kotlin
+// we no longer use this one as media3 has gottem a way better way of retrieving the playlist as seen in the next code snippet 
 /**
  * A helper extension to easily get a List<MediaItem> from the Player.
  * Place this in a 'PlayerExtensions.kt' file.
@@ -339,6 +317,42 @@ private val Player.mediaItems: List<MediaItem>
             get() = mediaItemCount
         override fun get(index: Int): MediaItem = getMediaItemAt(index)
     }
+
+// use this method to get the playlist instead, the old one had some flaws if used incorrectly 
+@SuppressLint("UnsafeOptInUsageError")
+@Composable
+fun MediaItemList(
+    modifier: Modifier = Modifier,
+    paddingValues: PaddingValues = PaddingValues(),
+    player: () -> Player?
+) {
+
+    val player = player()
+
+    val currentMediaItem = rememberCurrentMediaItemState(player)
+    val playlistState = rememberPlaylistState(player)
+
+    LazyColumn(contentPadding = paddingValues.plus(PaddingValues(16.dp)), verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap), modifier = modifier) {
+
+        items(playlistState.mediaItemCount) { index ->
+
+            val mediaItem = playlistState.getMediaItemAt(index)
+            val isPlaying = currentMediaItem.mediaItem?.mediaId == mediaItem.mediaId
+
+            MediaItemRow(
+                shapes = ListItemDefaults.segmentedShapes(index = index,count = playlistState.mediaItemCount),
+                isPlaying = isPlaying,
+                mediaItem = mediaItem,
+                onClick = {
+                    playlistState.seekToMediaItem(index)
+                }
+            )
+
+        }
+
+    }
+
+}
 ```
 
 ## Acknowledgements
