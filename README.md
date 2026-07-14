@@ -8,7 +8,7 @@ I don't have the understanding of software licenses so treat this text as the cu
 
 ---
 
-## it's now a repo grab it here implementation("com.github.at-oliverapps:media3-session-compose:1.0.0")
+## it's now a repo grab it here implementation("io.oliverapps/media3-session-compose:1.10.1")
 
 ## 🤔 What This Solves
 
