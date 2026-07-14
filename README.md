@@ -12,6 +12,7 @@ I don't have the understanding of software licenses so treat this text as the cu
 
 for now you will have to add jitpack to your root build.gradle 
 
+```
 dependencyResolutionManagement {
 	repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 	repositories {
@@ -19,6 +20,7 @@ dependencyResolutionManagement {
 		maven { url 'https://jitpack.io' }
 	}
 }
+```
 
 ## 🤔 What This Solves
 
