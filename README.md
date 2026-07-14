@@ -10,6 +10,16 @@ I don't have the understanding of software licenses so treat this text as the cu
 
 ## it's now a repo grab it here implementation("io.oliverapps/media3-session-compose:1.10.1")
 
+for now you will have to add jitpack to your root build.gradle 
+
+dependencyResolutionManagement {
+	repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+	repositories {
+		mavenCentral()
+		maven { url 'https://jitpack.io' }
+	}
+}
+
 ## 🤔 What This Solves
 
 The official `media3-ui-compose` library provides great state helpers like `rememberPlayPauseButtonState(player)` or a bunch of other convinience methods, but it leaves you with one big question:
