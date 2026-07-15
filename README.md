@@ -8,18 +8,11 @@ I don't have the understanding of software licenses so treat this text as the cu
 
 ---
 
-## it's now a repo grab it here implementation("io.oliverapps/media3-session-compose:1.10.1")
-
-for now you will have to add jitpack to your root build.gradle 
+## it's now a repo grab it here, the repo is on maven so you dont have to do anything just import it and enjoy 
 
 ```
-dependencyResolutionManagement {
-	repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-	repositories {
-		mavenCentral()
-		maven { url 'https://jitpack.io' }
-	}
-}
+implementation("io.oliverapps/media3-session-compose:1.10.1") 
+media3-session-compose = { module = "io.oliverapps:media3-session-compose", version = "1.10.1" }
 ```
 
 ## 🤔 What This Solves
