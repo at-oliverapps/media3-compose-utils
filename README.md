@@ -11,9 +11,11 @@ I don't have the understanding of software licenses so treat this text as the cu
 ## it's now a repo grab it here, the repo is on maven so you dont have to do anything just import it and enjoy 
 
 ```
-implementation "io.oliverapps/media3-session-compose:1.10.1" directly in your build.gradle
-implementation("io.oliverapps/media3-session-compose:1.10.1") directly in your build.gradle.ktx
-media3-session-compose = { module = "io.oliverapps:media3-session-compose", version = "1.10.1" } if you are using libs.versions.toml
+Groovy: implementation "io.oliverapps/media3-session-compose:1.10.1"
+
+Kotlin: implementation("io.oliverapps/media3-session-compose:1.10.1")
+
+Version Catalog: media3-session-compose = { module = "io.oliverapps:media3-session-compose", version = "1.10.1" }
 ```
 
 ## 🤔 What This Solves
